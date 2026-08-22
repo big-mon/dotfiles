@@ -1,113 +1,80 @@
-# Apple Silicon macOS environment
+# Apple Silicon Mac 環境セットアップ
 
-Public configuration for a dedicated Hermes machine. The design separates
-system administration from day-to-day agent operation and keeps credentials,
-Hermes state, sessions, and application data outside Git.
+このリポジトリは、Hermes専用Macで使う公開設定を管理します。まず人間が、管理者アカウントと標準アカウントを用意し、必要なアプリをインストールします。そこまで終わったら、AIにこのリポジトリと `AGENTS.md` を読ませて、設定の適用やHermes構成を案内させます。
 
-## Repository layout
+パスワード、APIキー、OAuth情報などの秘密情報は、このリポジトリへ保存しません。
 
-```text
-accounts/
-├── admin/
-│   └── Brewfile
-└── agents/
-    ├── mise.toml
-    ├── mise.lock
-    └── dotfiles/
-scripts/
-tests/
-```
+## 最低限の完了状態
 
-`accounts/admin` is read and applied by the administrator. `accounts/agents` is
-owned and applied by the standard account named `agents`. Root-level scripts and
-tests support the repository as a whole.
+次の状態まで人間が準備します。
 
-## Account model
+- Apple Silicon Macに管理者アカウントがある
+- `agents` という標準アカウントがある
+- 管理者がHomebrewと共有アプリをインストールしている
+- `agents` がmise、Hermes Agent、Codex CLIをインストールしている
+- このリポジトリが `/Users/agents/Repos/dotfiles` にある
+- `accounts/agents` のmise設定とdotfilesが適用されている
 
-### Administrator account
+Hermesのプロバイダー、`default` / `coder` プロファイル、Discord、Gateway、cron、各種認証は、その後AIと確認しながら設定します。
 
-The administrator account is used only for macOS administration and shared
-software. It owns Homebrew at `/opt/homebrew` and applies updates from
-`accounts/admin/Brewfile`. Hermes does not run from this account.
+## 1. アカウントを用意する
 
-| Group | Software | Purpose |
-| --- | --- | --- |
-| GUI applications | Ghostty, Obsidian, Zed | Terminal, notes, and editor available to `agents` |
-| General CLI | `fd`, `jq`, `ripgrep`, `tree`, `yq` | Search and structured-data utilities |
-| GitHub/Git | GitHub CLI (`gh`), Git LFS | Repository access and large-file support |
-| Validation | ShellCheck, shfmt | Shell-script checks used by the snapshot workflow |
-| Shell additions | zsh-autosuggestions, zsh-syntax-highlighting | Interactive zsh support |
+macOSの初期設定で管理者アカウントを作ります。次に、管理者アカウントから **システム設定 → ユーザとグループ** を開き、次の標準アカウントを追加します。
 
-The Brewfile is the authoritative package list; transitive Homebrew dependencies
-are not documented separately.
+- アカウント名：`agents`
+- 種類：標準ユーザー
 
-### Standard account: `agents`
+Hermesと開発ツールは `agents` で実行します。Homebrewと共有アプリの変更は管理者が行います。
 
-`agents` is a non-administrator account that owns repositories, agent tooling,
-and user configuration.
+## 2. 管理者がHomebrewをインストールする
 
-| Software | Installation owner and route |
-| --- | --- |
-| mise | Per-user standalone installer; executable at `~/.local/bin/mise` |
-| pnpm | Installed by mise from `accounts/agents/mise.toml` and `mise.lock` |
-| Hermes Agent | Official per-user installer under `~/.hermes` with launcher in `~/.local/bin` |
-| uv, Python, Node.js, ripgrep, ffmpeg | Supplied or resolved by the Hermes installer; not separate user installations |
-| Codex CLI | Official npm-global package, installed with the Node/npm supplied by Hermes |
-| GitHub CLI and GUI applications | Shared installations supplied by the administrator's Homebrew setup |
-
-GitHub, Codex, model-provider, Discord, and other authentication is performed as
-`agents`. Credential values and OAuth state are never stored in this repository.
-
-## Build a new Mac
-
-### 1. Create the accounts and install Homebrew
-
-During macOS setup, create an administrator account. From that account, add a
-separate **Standard** account named `agents` in **System Settings → Users &
-Groups**.
-
-Still in the administrator account, install Homebrew through its official
-installer and load it into the current shell:
+管理者アカウントで、公式installerからHomebrewをインストールします。
 
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
-The Homebrew installation must remain owned by the administrator account.
+Homebrewは `/opt/homebrew` に置き、管理者アカウントが所有します。
 
-### 2. Install mise and clone the repository as `agents`
+## 3. `agents` がmiseを入れてリポジトリを取得する
 
-Sign in as `agents` and install mise through its per-user installer:
+`agents` へサインインし、miseをユーザー領域へインストールします。
 
 ```sh
 curl https://mise.run | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Clone the public repository:
+続いて公開リポジトリを取得します。
 
 ```sh
 mkdir -p ~/Repos
 git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
 ```
 
-### 3. Apply shared packages as the administrator
+## 4. 管理者が共有アプリをインストールする
 
-Return to an administrator shell. Use the absolute path because `~` would refer
-to the administrator account:
+管理者アカウントへ戻り、`accounts/admin/Brewfile` を適用します。
 
 ```sh
 /opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
 /opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
 ```
 
-This installs the shared command-line tools and GUI applications listed above.
-Package upgrades and removals remain administrator actions.
+主に次のアプリとCLIが入ります。
 
-### 4. Apply user tools and dotfiles as `agents`
+- GUI：Ghostty、Obsidian、Zed
+- Git/GitHub：GitHub CLI、Git LFS
+- 検索・データ処理：fd、ripgrep、jq、yq、tree
+- シェル検証：ShellCheck、shfmt
+- zsh補助：zsh-autosuggestions、zsh-syntax-highlighting
 
-Return to the `agents` shell and use its account-specific mise configuration:
+正確な直接依存は `accounts/admin/Brewfile` を基準にします。
+
+## 5. `agents` がユーザー設定を適用する
+
+`agents` へ戻り、適用内容を先に確認します。
 
 ```sh
 cd ~/Repos/dotfiles/accounts/agents
@@ -117,9 +84,7 @@ mise bootstrap dotfiles status
 mise bootstrap --dry-run
 ```
 
-If mise reports an existing-file conflict, move that target to a backup outside
-the managed path and repeat the dry run. Apply only when the plan contains no
-unreviewed replacement:
+既存ファイルとの競合が表示された場合は、その場で上書きせず、AIにバックアップ方法を確認してください。確認後に適用します。
 
 ```sh
 mise bootstrap --yes
@@ -127,70 +92,36 @@ mise trust ~/.config/mise/config.toml
 mise bootstrap status --missing
 ```
 
-The second trust applies to the newly linked user-level mise config. This step
-is complete when the final command exits successfully and every declared
-dotfile is `applied` and every declared tool is `installed`.
-
-Start a fresh login shell so it reads the managed `.zprofile` and `.zshrc`:
+最後のコマンドが成功し、dotfileが `applied`、ツールが `installed` なら完了です。新しいシェル設定を読むため、ログインシェルを開き直します。
 
 ```sh
 exec zsh -l
 ```
 
-### 5. Install Hermes and Codex as `agents`
+## 6. `agents` がHermesとCodexをインストールする
 
-Install Hermes through its official per-user installer, configure a working
-provider, and run its static diagnostics:
+Hermes Agentは公式のユーザー向けinstallerで入れます。
 
 ```sh
 curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
-hermes setup
-hermes doctor
+hermes --version
 ```
 
-The Hermes installer manages its own Python and Node.js runtimes. Use that npm
-to install Codex CLI:
+Hermes installerがユーザー領域のuv、Python、Node.jsなどを管理するため、これらを別経路で追加する必要はありません。Hermes付属のnpmからCodex CLIを入れます。
 
 ```sh
 npm install --global @openai/codex@latest
-codex login
-codex login status
-gh auth login
-gh auth status
+codex --version
 ```
 
-### 6. Recreate non-secret Hermes structure
+## 7. AIへ引き継ぐ
 
-Keep `default` as the daily-assistant profile and create `coder` for software
-development. Profile creation also creates the `coder` launcher:
+ここまで終わったら、`agents` でこのリポジトリを開き、AIへ次のように依頼します。
 
-```sh
-hermes profile create coder
-coder setup
-hermes profile list
-```
+> `/Users/agents/Repos/dotfiles` の `AGENTS.md` と現在の環境を確認し、未完了のセットアップを順番に説明して。秘密情報はGitへ保存せず、管理者操作は管理者用コマンドとして分けて提示して。
 
-Configure and install the two messaging Gateways separately:
+AIは `AGENTS.md` を基準に、認証、Hermesプロファイル、Gateway、Discord、cronなどの残作業を案内します。
 
-```sh
-hermes gateway setup
-hermes gateway install
-coder gateway setup
-coder gateway install
-hermes gateway list
-```
-
-Provider and messaging setup writes credentials outside this repository. The
-weekly environment-update cron belongs to `default`; it runs
-`scripts/publish-dotfiles` before its read-only update check, committing changed
-public configuration without copying credentials into Git.
-
-## Roll back `agents` dotfiles
-
-Remove a symlink only when it still points into this checkout, then restore the
-file backed up during setup. Package, runtime, Hermes, and authentication state
-are outside dotfile rollback.
-
-## License
+## ライセンス
 
 MIT
