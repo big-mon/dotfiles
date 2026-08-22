@@ -4,26 +4,42 @@ Public configuration for a dedicated Hermes machine. The design separates
 system administration from day-to-day agent operation and keeps credentials,
 Hermes state, sessions, and application data outside Git.
 
+## Repository layout
+
+```text
+accounts/
+├── admin/
+│   └── Brewfile
+└── agents/
+    ├── mise.toml
+    ├── mise.lock
+    └── dotfiles/
+scripts/
+tests/
+```
+
+`accounts/admin` is read and applied by the administrator. `accounts/agents` is
+owned and applied by the standard account named `agents`. Root-level scripts and
+tests support the repository as a whole.
+
 ## Account model
 
 ### Administrator account
 
 The administrator account is used only for macOS administration and shared
-software. It owns Homebrew at `/opt/homebrew` and applies updates to the
-`Brewfile`. Hermes does not run from this account.
-
-Install Homebrew itself, then the direct packages declared in `Brewfile`:
+software. It owns Homebrew at `/opt/homebrew` and applies updates from
+`accounts/admin/Brewfile`. Hermes does not run from this account.
 
 | Group | Software | Purpose |
 | --- | --- | --- |
-| GUI applications | Ghostty, Obsidian, Zed | Terminal, notes, and editor available to the standard account |
+| GUI applications | Ghostty, Obsidian, Zed | Terminal, notes, and editor available to `agents` |
 | General CLI | `fd`, `jq`, `ripgrep`, `tree`, `yq` | Search and structured-data utilities |
 | GitHub/Git | GitHub CLI (`gh`), Git LFS | Repository access and large-file support |
-| Validation | ShellCheck, shfmt | Shell-script checks used by the dotfiles snapshot |
+| Validation | ShellCheck, shfmt | Shell-script checks used by the snapshot workflow |
 | Shell additions | zsh-autosuggestions, zsh-syntax-highlighting | Interactive zsh support |
 
-`Brewfile` remains the authoritative package list; transitive Homebrew
-dependencies are not documented separately.
+The Brewfile is the authoritative package list; transitive Homebrew dependencies
+are not documented separately.
 
 ### Standard account: `agents`
 
@@ -33,9 +49,9 @@ and user configuration.
 | Software | Installation owner and route |
 | --- | --- |
 | mise | Per-user standalone installer; executable at `~/.local/bin/mise` |
-| pnpm | Installed by mise from `mise.toml` and `mise.lock` |
+| pnpm | Installed by mise from `accounts/agents/mise.toml` and `mise.lock` |
 | Hermes Agent | Official per-user installer under `~/.hermes` with launcher in `~/.local/bin` |
-| uv, Python, Node.js, ripgrep, ffmpeg | Supplied or resolved by the Hermes installer; do not manage them as separate user installations |
+| uv, Python, Node.js, ripgrep, ffmpeg | Supplied or resolved by the Hermes installer; not separate user installations |
 | Codex CLI | Official npm-global package, installed with the Node/npm supplied by Hermes |
 | GitHub CLI and GUI applications | Shared installations supplied by the administrator's Homebrew setup |
 
@@ -74,7 +90,6 @@ Clone the public repository:
 ```sh
 mkdir -p ~/Repos
 git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
-cd ~/Repos/dotfiles
 ```
 
 ### 3. Apply shared packages as the administrator
@@ -83,8 +98,8 @@ Return to an administrator shell. Use the absolute path because `~` would refer
 to the administrator account:
 
 ```sh
-/opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/Brewfile
-/opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/Brewfile
+/opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
+/opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
 ```
 
 This installs the shared command-line tools and GUI applications listed above.
@@ -92,10 +107,10 @@ Package upgrades and removals remain administrator actions.
 
 ### 4. Apply user tools and dotfiles as `agents`
 
-Return to the `agents` shell and inspect mise's plan:
+Return to the `agents` shell and use its account-specific mise configuration:
 
 ```sh
-cd ~/Repos/dotfiles
+cd ~/Repos/dotfiles/accounts/agents
 mise trust
 mise fmt --check
 mise bootstrap dotfiles status
@@ -168,9 +183,9 @@ hermes gateway list
 Provider and messaging setup writes credentials outside this repository. The
 weekly environment-update cron belongs to `default`; it runs
 `scripts/publish-dotfiles` before its read-only update check, committing changed
-public dotfiles without copying credentials into Git.
+public configuration without copying credentials into Git.
 
-## Roll back dotfiles
+## Roll back `agents` dotfiles
 
 Remove a symlink only when it still points into this checkout, then restore the
 file backed up during setup. Package, runtime, Hermes, and authentication state

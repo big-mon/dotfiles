@@ -47,9 +47,10 @@ done < <(
 	} | sort -zu
 )
 
-# Validate repository formatting and task/config structure before staging.
-mise fmt --check
-mise tasks validate
+# Validate the standard account's mise config before staging.
+agents_config="$repo_root/accounts/agents"
+mise -C "$agents_config" fmt --check
+mise -C "$agents_config" tasks validate
 if [[ -d tests ]]; then
 	python3 -m unittest discover -s tests -v
 fi
