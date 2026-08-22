@@ -1,17 +1,25 @@
 # Hermes Agent — ensure ~/.local/bin is on PATH
 export PATH="$HOME/.local/bin:$PATH"
 
-# Raise the per-process file descriptor soft limit for Ghostty shells and
-# processes launched from them, including `hermes --profile coder`.
-ulimit -n 4096
+# Raise the per-process file descriptor soft limit when it is below 4096.
+current_nofile=$(ulimit -n)
+if [[ "$current_nofile" == <-> ]] && (( current_nofile < 4096 )); then
+  ulimit -n 4096 2>/dev/null
+fi
+unset current_nofile
 
 # mise — user-scoped development tool and runtime manager
 # https://mise.jdx.dev/
 eval "$(mise activate zsh)"
 
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+autosuggestions=/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -r "$autosuggestions" ]] && source "$autosuggestions"
+unset autosuggestions
 
 # Use Zed as the default editor.
 export EDITOR="zed --wait"
 export VISUAL="zed --wait"
+
+# zsh-syntax-highlighting should be sourced after other shell configuration.
+syntax_highlighting=/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+[[ -r "$syntax_highlighting" ]] && source "$syntax_highlighting"
