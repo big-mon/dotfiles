@@ -27,6 +27,19 @@ repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 }
 cd "$repo_root"
 
+current_branch=$(git symbolic-ref --quiet --short HEAD) || {
+	printf 'error: refusing automatic snapshot from detached HEAD\n' >&2
+	exit 1
+}
+if [[ "$current_branch" != "main" ]]; then
+	printf 'error: snapshot requires branch main; current branch: %s\n' "$current_branch" >&2
+	exit 1
+fi
+git remote get-url origin >/dev/null 2>&1 || {
+	printf 'error: required Git remote is missing: origin\n' >&2
+	exit 1
+}
+
 if [[ -z "$(git status --porcelain)" ]]; then
 	printf 'No agents dotfiles changes to snapshot.\n'
 	exit 0
@@ -82,6 +95,6 @@ git diff --cached --stat
 git diff --cached --name-status
 
 git -c core.hooksPath=/dev/null commit -m "$commit_message" -- users/agents/dotfiles
-git -c core.hooksPath=/dev/null push
+git -c core.hooksPath=/dev/null push origin main
 
 printf '\nSnapshotted agents dotfiles successfully.\n'

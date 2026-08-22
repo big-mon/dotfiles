@@ -134,6 +134,74 @@ class SnapshotAgentsDotfilesTest(unittest.TestCase):
         ).strip()
         self.assertEqual(count, "1")
 
+    def test_refuses_non_main_branch_before_commit(self):
+        subprocess.run(
+            ["git", "-C", str(self.repo), "switch", "-c", "scratch"],
+            check=True,
+            capture_output=True,
+        )
+        (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
+
+        result = self.run_snapshot("Wrong branch")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("snapshot requires branch main", result.stderr)
+        count = subprocess.check_output(
+            ["git", "-C", str(self.repo), "rev-list", "--count", "HEAD"], text=True
+        ).strip()
+        self.assertEqual(count, "1")
+
+    def test_refuses_detached_head_before_commit(self):
+        subprocess.run(
+            ["git", "-C", str(self.repo), "switch", "--detach"],
+            check=True,
+            capture_output=True,
+        )
+        (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
+
+        result = self.run_snapshot("Detached head")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("detached HEAD", result.stderr)
+        count = subprocess.check_output(
+            ["git", "-C", str(self.repo), "rev-list", "--count", "HEAD"], text=True
+        ).strip()
+        self.assertEqual(count, "1")
+
+    def test_pushes_origin_main_without_push_default(self):
+        subprocess.run(
+            ["git", "-C", str(self.repo), "config", "push.default", "nothing"],
+            check=True,
+        )
+        (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
+
+        result = self.run_snapshot("Explicit main push")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        remote = subprocess.check_output(
+            ["git", "--git-dir", str(self.remote), "log", "-1", "--pretty=%s", "main"], text=True
+        ).strip()
+        self.assertEqual(remote, "Explicit main push")
+
+    def test_pushes_origin_main_without_upstream(self):
+        subprocess.run(
+            ["git", "-C", str(self.repo), "config", "--unset", "branch.main.remote"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(self.repo), "config", "--unset", "branch.main.merge"],
+            check=True,
+        )
+        (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
+
+        result = self.run_snapshot("Explicit push without upstream")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        remote = subprocess.check_output(
+            ["git", "--git-dir", str(self.remote), "log", "-1", "--pretty=%s", "main"], text=True
+        ).strip()
+        self.assertEqual(remote, "Explicit push without upstream")
+
     def test_no_changes_is_a_successful_noop(self):
         result = self.run_snapshot("Nothing to snapshot")
 

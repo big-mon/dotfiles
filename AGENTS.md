@@ -100,7 +100,7 @@ Configure providers and messaging interactively. A Gateway is ready only after i
 
 Live dotfiles are symlinks into this checkout. The `default` profile's weekly environment-update cron runs `scripts/snapshot-agents-dotfiles` before its read-only update check.
 
-The snapshot helper may stage and commit only `users/agents/dotfiles/`. Any changed or staged path outside that directory must stop the snapshot with an error. In particular, automation must never publish changes to `AGENTS.md`, `README.md`, `hosts/`, `users/agents/mise.toml`, `users/agents/mise.lock`, `scripts/`, or `tests/`.
+The snapshot helper may stage and commit only `users/agents/dotfiles/`. It runs only on symbolic branch `main`, requires remote `origin`, and pushes explicitly with `git push origin main`; detached HEAD and every other branch stop before commit. Any changed or staged path outside the allowed directory must also stop the snapshot with an error. In particular, automation must never publish changes to `AGENTS.md`, `README.md`, `hosts/`, `users/agents/mise.toml`, `users/agents/mise.lock`, `scripts/`, or `tests/`.
 
 Changes outside the allowed directory require explicit human review or a reviewed pull request. The snapshot helper runs `mise fmt --check` and the read-only `mise bootstrap status --missing`, runs tests, rejects likely secret material, and shows the staged changes. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
 
