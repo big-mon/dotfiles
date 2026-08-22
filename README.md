@@ -13,7 +13,7 @@
 - 管理者がHomebrewと共有アプリをインストールしている
 - `agents` がmise、Hermes Agent、Codex CLIをインストールしている
 - このリポジトリが `/Users/agents/Repos/dotfiles` にある
-- `accounts/agents` のmise設定とdotfilesが適用されている
+- `users/agents` のmise設定とdotfilesが適用されている
 
 Hermesのプロバイダー、`default` / `coder` プロファイル、Discord、Gateway、cron、各種認証は、その後AIと確認しながら設定します。
 
@@ -55,11 +55,11 @@ git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
 
 ## 4. 管理者が共有アプリをインストールする
 
-管理者アカウントへ戻り、`accounts/admin/Brewfile` を適用します。
+管理者アカウントへ戻り、`hosts/hermes-macos/Brewfile` を適用します。
 
 ```sh
-/opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
-/opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
+/opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
+/opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
 ```
 
 主に次のアプリとCLIが入ります。
@@ -70,14 +70,14 @@ git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
 - シェル検証：ShellCheck、shfmt
 - zsh補助：zsh-autosuggestions、zsh-syntax-highlighting
 
-正確な直接依存は `accounts/admin/Brewfile` を基準にします。
+正確な直接依存は `hosts/hermes-macos/Brewfile` を基準にします。
 
 ## 5. `agents` がユーザー設定を適用する
 
 `agents` へ戻り、適用内容を先に確認します。
 
 ```sh
-cd ~/Repos/dotfiles/accounts/agents
+cd ~/Repos/dotfiles/users/agents
 mise trust
 mise fmt --check
 mise bootstrap dotfiles status

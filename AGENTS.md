@@ -13,18 +13,18 @@ Assume the human has completed the minimum steps in `README.md`:
 - macOS has an administrator account and a non-administrator account named `agents`.
 - The administrator owns Homebrew at `/opt/homebrew`.
 - This repository exists at `/Users/agents/Repos/dotfiles`.
-- Shared applications come from `accounts/admin/Brewfile`.
+- Shared applications come from `hosts/hermes-macos/Brewfile`.
 - `agents` has mise, Hermes Agent, and Codex CLI installed.
-- mise has applied the configuration under `accounts/agents`.
+- mise has applied the configuration under `users/agents`.
 - Credentials, OAuth state, Hermes profiles, sessions, memories, and application data remain outside Git.
 
 Verify these assumptions before relying on them. If a prerequisite is missing, explain the corresponding human step from `README.md` rather than improvising another installation route.
 
 ## Sources of truth
 
-- `accounts/admin/Brewfile`: direct shared Homebrew formulae and casks.
-- `accounts/agents/mise.toml` and `mise.lock`: user-owned tools and managed dotfiles.
-- `accounts/agents/dotfiles/`: public files symlinked into the `agents` home directory.
+- `hosts/hermes-macos/Brewfile`: direct shared Homebrew formulae and casks.
+- `users/agents/mise.toml` and `mise.lock`: user-owned tools and managed dotfiles.
+- `users/agents/dotfiles/`: public files symlinked into the `agents` home directory.
 - `scripts/publish-dotfiles`: validated weekly snapshot helper.
 - `tests/`: behavior checks for the snapshot helper.
 - `README.md`: human account and software bootstrap.
@@ -39,7 +39,7 @@ The administrator owns all Homebrew mutations under `/opt/homebrew`. From the `a
 
 ### `agents`
 
-- mise owns pnpm and the symlinks declared in `accounts/agents/mise.toml`.
+- mise owns pnpm and the symlinks declared in `users/agents/mise.toml`.
 - Hermes owns its uv, Python, Node.js, virtual environment, and migrations under `~/.hermes`.
 - Codex CLI follows the official npm-global stable route using Hermes-supplied npm.
 - GitHub CLI is shared through Homebrew; its authentication belongs to `agents`.
@@ -57,19 +57,19 @@ Inspect the platform, current account, `/opt/homebrew` ownership, required comma
 Check the administrator bundle without upgrading it:
 
 ```sh
-HOMEBREW_NO_AUTO_UPDATE=1 /opt/homebrew/bin/brew bundle check --no-upgrade --file /Users/agents/Repos/dotfiles/accounts/admin/Brewfile
+HOMEBREW_NO_AUTO_UPDATE=1 /opt/homebrew/bin/brew bundle check --no-upgrade --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
 ```
 
 Check the standard-account configuration from its own directory:
 
 ```sh
-cd /Users/agents/Repos/dotfiles/accounts/agents
+cd /Users/agents/Repos/dotfiles/users/agents
 mise fmt --check
 mise bootstrap dotfiles status
 mise bootstrap --dry-run
 ```
 
-For each existing-file conflict, show the exact target and proposed backup destination before moving anything. Wait for human approval of filesystem moves. Apply without force flags. Completion requires every declared dotfile to be `applied`, every declared tool to be `installed`, and every live symlink to resolve into `accounts/agents/dotfiles`.
+For each existing-file conflict, show the exact target and proposed backup destination before moving anything. Wait for human approval of filesystem moves. Apply without force flags. Completion requires every declared dotfile to be `applied`, every declared tool to be `installed`, and every live symlink to resolve into `users/agents/dotfiles`.
 
 ### 3. Reconcile non-secret Hermes structure
 
@@ -88,8 +88,8 @@ The snapshot helper must remain fail-closed: validate the `agents` mise configur
 
 The external monitor at `~/.hermes/scripts/environment_update_snapshot.py` must continue to reference:
 
-- `/Users/agents/Repos/dotfiles/accounts/admin/Brewfile`
-- `/Users/agents/Repos/dotfiles/accounts/agents`
+- `/Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile`
+- `/Users/agents/Repos/dotfiles/users/agents`
 
 A layout change is incomplete until the monitor runs successfully against the new paths.
 
@@ -104,12 +104,12 @@ shellcheck scripts/publish-dotfiles
 shfmt -d scripts/publish-dotfiles
 git diff --check
 
-MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/accounts/agents \
-  mise -C /Users/agents/Repos/dotfiles/accounts/agents fmt --check
-MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/accounts/agents \
-  mise -C /Users/agents/Repos/dotfiles/accounts/agents tasks validate
-MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/accounts/agents \
-  mise -C /Users/agents/Repos/dotfiles/accounts/agents bootstrap status --missing
+MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
+  mise -C /Users/agents/Repos/dotfiles/users/agents fmt --check
+MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
+  mise -C /Users/agents/Repos/dotfiles/users/agents tasks validate
+MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
+  mise -C /Users/agents/Repos/dotfiles/users/agents bootstrap status --missing
 ```
 
 Also verify Homebrew bundle satisfaction, live symlink targets, and a monitor snapshot with no errors. Work is complete only when all affected automation paths have been exercised and the repository contains no credential material.

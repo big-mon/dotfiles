@@ -48,7 +48,7 @@ done < <(
 )
 
 # Validate the standard account's mise config before staging.
-agents_config="$repo_root/accounts/agents"
+agents_config="$repo_root/users/agents"
 mise -C "$agents_config" fmt --check
 mise -C "$agents_config" tasks validate
 if [[ -d tests ]]; then

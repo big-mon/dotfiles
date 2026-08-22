@@ -24,7 +24,7 @@ class PublishDotfilesTest(unittest.TestCase):
         subprocess.run(["git", "-C", str(self.repo), "config", "user.email", "test@example.com"], check=True)
         subprocess.run(["git", "-C", str(self.repo), "remote", "add", "origin", str(self.remote)], check=True)
 
-        self.agents = self.repo / "accounts" / "agents"
+        self.agents = self.repo / "users" / "agents"
         (self.agents / "dotfiles").mkdir(parents=True)
         (self.agents / "dotfiles" / "zshrc").write_text("# initial\n")
         (self.agents / "mise.toml").write_text("[tools]\n")
