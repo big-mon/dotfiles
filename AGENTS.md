@@ -17,7 +17,6 @@ Assume the human has completed the minimum steps in `README.md`:
 - Shared applications come from `hosts/hermes-macos/Brewfile`.
 - `agents` has mise, Hermes Agent, and Codex CLI installed.
 - mise has applied the configuration under `users/agents`.
-- Credentials, OAuth state, Hermes profiles, sessions, memories, and application data remain outside Git.
 
 Verify these assumptions before relying on them. If a prerequisite is missing, explain the corresponding human step from `README.md` rather than improvising another installation route.
 
@@ -50,6 +49,8 @@ Never direct an administrator command to a file under `/Users/agents`. The admin
 - GitHub CLI is shared through Homebrew; its authentication belongs to `agents`.
 
 Keep these managers separate. Do not move Hermes runtimes into mise, add Codex to mise, or let Hermes mutate Homebrew.
+
+Authentication is interactive and external to this repository; do not write credential values into managed files.
 
 ## Agent procedure
 
@@ -86,14 +87,14 @@ mise bootstrap --dry-run
 
 For each existing-file conflict, show the exact target and proposed backup destination before moving anything. Wait for human approval of filesystem moves. Apply without force flags. Completion requires every declared dotfile to be `applied`, every declared tool to be `installed`, and every live symlink to resolve into `users/agents`.
 
-### 3. Reconcile non-secret Hermes structure
+### 3. Reconcile Hermes structure
 
 The intended profile split is:
 
 - `default`: daily assistant and owner of the weekly environment-update cron.
 - `coder`: software-development work.
 
-Configure provider credentials and messaging interactively, outside Git. A Gateway is ready only after its profile completes a normal CLI chat and `hermes gateway list` reports the service running. Never print or write credential values into repository files.
+Configure providers and messaging interactively. A Gateway is ready only after its profile completes a normal CLI chat and `hermes gateway list` reports the service running.
 
 ### 4. Preserve maintenance behavior
 
@@ -133,4 +134,4 @@ MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
   mise -C /Users/agents/Repos/dotfiles/users/agents bootstrap status --missing
 ```
 
-Also verify Homebrew bundle satisfaction, live symlink targets, and a monitor snapshot with no errors. Work is complete only when all affected automation paths have been exercised and the repository contains no credential material.
+Also verify Homebrew bundle satisfaction, live symlink targets, and a monitor snapshot with no errors. Work is complete only when all affected automation paths have been exercised.
