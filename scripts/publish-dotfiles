@@ -1,0 +1,68 @@
+#!/bin/bash
+set -euo pipefail
+
+commit_message="${1:-}"
+if [[ -z "$commit_message" ]]; then
+  printf 'error: a commit message is required\n' >&2
+  printf 'usage: mise run publish -- "Update shell settings"\n' >&2
+  exit 64
+fi
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  printf 'error: not inside a Git repository\n' >&2
+  exit 2
+}
+cd "$repo_root"
+
+if [[ -z "$(git status --porcelain)" ]]; then
+  printf 'No dotfiles changes to publish.\n'
+  exit 0
+fi
+
+check_path() {
+  local path="$1"
+  local lower
+  lower="$(printf '%s' "$path" | tr '[:upper:]' '[:lower:]')"
+
+  case "$lower" in
+    .env|.env.*|*/.env|*/.env.*|*.pem|*.key|*.p12|*.pfx|*credentials*|*secrets*)
+      printf 'error: suspicious filename is not allowed in this public repository: %s\n' "$path" >&2
+      return 1
+      ;;
+  esac
+
+  if [[ -f "$path" ]] && /usr/bin/grep -qE -- '-----BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY-----' "$path"; then
+    printf 'error: private key material detected in: %s\n' "$path" >&2
+    return 1
+  fi
+}
+
+while IFS= read -r -d '' path; do
+  check_path "$path"
+done < <(
+  {
+    git diff --name-only -z
+    git diff --cached --name-only -z
+    git ls-files --others --exclude-standard -z
+  } | sort -zu
+)
+
+# Validate repository formatting and task/config structure before staging.
+mise fmt --check
+mise tasks validate
+if [[ -d tests ]]; then
+  python3 -m unittest discover -s tests -v
+fi
+
+git diff --check
+git add -A
+git diff --cached --check
+
+printf '\nChanges to publish:\n'
+git diff --cached --stat
+git diff --cached --name-status
+
+git commit -m "$commit_message"
+git push
+
+printf '\nPublished dotfiles successfully.\n'

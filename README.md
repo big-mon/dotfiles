@@ -4,9 +4,9 @@ Public, reproducible configuration for the dedicated `agents` macOS user. The
 repository uses mise's native bootstrap/dotfiles support and keeps credentials,
 Hermes state, sessions, caches, and application data outside Git.
 
-Live application is intentionally deferred. Review
-[`docs/live-apply-proposal.md`](docs/live-apply-proposal.md) before replacing any
-existing file.
+The declared dotfiles are applied as symlinks on the current `agents` account.
+[`docs/live-apply-proposal.md`](docs/live-apply-proposal.md) records the original
+reviewed application and rollback boundaries for another machine.
 
 ## Ownership boundaries
 
@@ -99,13 +99,34 @@ brew outdated --json=v2
 Hermes may report Homebrew candidates and exact administrator commands, but it
 does not execute Homebrew mutations.
 
+## Publish local changes
+
+Changes made through the live symlinks modify this checkout directly. To inspect,
+validate, commit, and push those local changes:
+
+```sh
+cd ~/Repos/dotfiles
+mise run publish -- "Update shell settings"
+```
+
+The publish task:
+
+1. refuses common secret filenames and private-key material;
+2. runs mise formatting/config validation and the repository test suite;
+3. checks the Git diff, then displays the staged file list and summary;
+4. commits with the required message and pushes the current branch.
+
+An empty working tree is a successful no-op. A failed validation, commit, or push
+stops the task and reports the underlying error. It does not pull remote changes,
+update packages, or rewrite Git history.
+
 ## Rollback
 
-Before an approved apply, save the current `~/.zshrc`, `~/.gitconfig`, and
-`~/.config/mise/config.toml`; `~/.zprofile` is currently absent. To roll back,
-remove only a repository-owned symlink that still points to this checkout,
-then restore the saved regular file. Homebrew, Codex, Hermes, uv, and
-authentication state are not dotfile rollback targets.
+Before applying on another machine, save any existing `~/.zprofile`, `~/.zshrc`,
+`~/.gitconfig`, and `~/.config/mise/config.toml`. To roll back, remove only a
+repository-owned symlink that still points to this checkout, then restore the
+saved regular file. Homebrew, Codex, Hermes, uv, and authentication state are
+not dotfile rollback targets.
 
 ## License
 
