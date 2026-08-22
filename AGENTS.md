@@ -101,7 +101,9 @@ Live dotfiles are symlinks into this checkout. The `default` profile's weekly en
 
 The snapshot helper may stage and commit only `users/agents/dotfiles/`. Any changed or staged path outside that directory must stop the snapshot with an error. In particular, automation must never publish changes to `AGENTS.md`, `README.md`, `hosts/`, `users/agents/mise.toml`, `users/agents/mise.lock`, `scripts/`, or `tests/`.
 
-Changes outside the allowed directory require explicit human review or a reviewed pull request. The snapshot helper also validates the `agents` mise configuration, runs tests, rejects likely secret material, and shows the staged changes. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
+Changes outside the allowed directory require explicit human review or a reviewed pull request. The snapshot helper runs `mise fmt --check` and the read-only `mise bootstrap status --missing`, runs tests, rejects likely secret material, and shows the staged changes. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
+
+The cron script defines a minimal deterministic PATH and resolves mise from `~/.local/bin/mise` and Python from `/usr/bin/python3` unless explicit `MISE_BIN` or `PYTHON_BIN` overrides are supplied. Do not make cron correctness depend on interactive shell activation.
 
 The root `.gitignore` excludes `.DS_Store`, Python `__pycache__` directories, and bytecode. It intentionally does not ignore `.env`; an `.env` under the allowed snapshot path must remain visible and stop the snapshot.
 
@@ -127,8 +129,6 @@ git diff --check
 
 MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
   mise -C /Users/agents/Repos/dotfiles/users/agents fmt --check
-MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
-  mise -C /Users/agents/Repos/dotfiles/users/agents tasks validate
 MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \
   mise -C /Users/agents/Repos/dotfiles/users/agents bootstrap status --missing
 ```

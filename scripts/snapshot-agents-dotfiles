@@ -1,6 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+mise_bin="${MISE_BIN:-$HOME/.local/bin/mise}"
+python_bin="${PYTHON_BIN:-/usr/bin/python3}"
+
+[[ -x "$mise_bin" ]] || {
+	printf 'error: mise not found or not executable: %s\n' "$mise_bin" >&2
+	exit 127
+}
+[[ -x "$python_bin" ]] || {
+	printf 'error: Python not found or not executable: %s\n' "$python_bin" >&2
+	exit 127
+}
+
 commit_message="${1:-}"
 if [[ -z "$commit_message" ]]; then
 	printf 'error: a commit message is required\n' >&2
@@ -47,19 +60,17 @@ while IFS= read -r -d '' path; do
 	esac
 	check_path "$path"
 done < <(
-	{
-		git diff --no-renames --name-only -z
-		git diff --cached --no-renames --name-only -z
-		git ls-files --others --exclude-standard -z
-	} | sort -zu
+	git diff --no-renames --name-only -z
+	git diff --cached --no-renames --name-only -z
+	git ls-files --others --exclude-standard -z
 )
 
 # Validate the standard account's mise config before staging.
 agents_config="$repo_root/users/agents"
-mise -C "$agents_config" fmt --check
-mise -C "$agents_config" tasks validate
+"$mise_bin" -C "$agents_config" fmt --check
+"$mise_bin" -C "$agents_config" bootstrap status --missing
 if [[ -d tests ]]; then
-	/usr/bin/python3 -B -m unittest discover -s tests -v
+	"$python_bin" -B -m unittest discover -s tests -v
 fi
 
 git diff --check
