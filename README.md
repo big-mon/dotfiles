@@ -1,126 +1,69 @@
 # macOS dotfiles
 
-Public, reproducible configuration for the dedicated `agents` macOS user. The
-repository uses mise's native bootstrap/dotfiles support and keeps credentials,
-Hermes state, sessions, caches, and application data outside Git.
+Public configuration for the dedicated `agents` macOS account. Credentials,
+Hermes state, sessions, caches, and application data stay outside this
+repository.
 
-The declared dotfiles are applied as symlinks on the current `agents` account.
-[`docs/live-apply-proposal.md`](docs/live-apply-proposal.md) records the original
-reviewed application and rollback boundaries for another machine.
+## Management boundaries
 
-## Ownership boundaries
-
-- `mise.toml` manages user-owned development tools and three public-safe
+- `mise.toml` is the source of truth for user-owned tools and symlinked
   dotfiles.
-- `Brewfile` records shared Homebrew formulae and casks. Homebrew is owned by
-  the administrator account; Hermes may inspect and propose changes but does
-  not install, upgrade, or remove Homebrew packages.
-- Hermes owns `~/.hermes/node`, its Python runtime, and its virtual environment.
-  This repository does not replace or update them independently.
-- Codex CLI stays on OpenAI's official npm-global stable route. It is not
-  version-pinned or automatically updated by `mise bootstrap`.
-- Authentication remains manual. No token, OAuth state, SSH material, shell
-  history, Hermes profile, memory, or session belongs here.
+- `Brewfile` declares shared packages. The administrator account reviews and
+  applies Homebrew changes.
+- Hermes manages its bundled runtimes and migrations. Codex CLI remains on its
+  official npm-global stable installation route.
+- Authentication is manual and external to this repository.
 
-## Declared state
+## Set up another machine
 
-- mise tool: `pnpm = "11.22.0"`, resolved in `mise.lock`
-- dotfiles: `~/.zprofile`, `~/.zshrc`, `~/.gitconfig`, and
-  `~/.config/mise/config.toml`
-- Homebrew: 11 direct formulae and 3 casks in `Brewfile`
-
-Observed but intentionally undeclared inventory is never deleted or pruned:
-
-- inactive Python 3.11.15
-- old pnpm 10.30.3 and 11.18.0
-- transitive Homebrew formulae `gmp`, `oniguruma`, and `pcre2`
-
-## First-machine order
-
-1. Install Homebrew and mise through their official stable routes.
-2. Clone this repository to `~/Repos/dotfiles`.
-3. As the administrator, inspect and apply shared packages:
+1. Install Homebrew and mise through their official stable routes, then clone
+   this repository to `~/Repos/dotfiles`.
+2. As the administrator, review and apply `Brewfile`:
 
    ```sh
    brew bundle check --file ~/Repos/dotfiles/Brewfile
    brew bundle --file ~/Repos/dotfiles/Brewfile
    ```
 
-   `brew bundle` installs missing declarations; upgrades and removals remain
-   separate, explicit administrator actions.
-
-4. Install Hermes Agent through its official stable installer. Hermes manages
-   its own Node/Python runtime and configuration migrations.
-5. As `agents`, inspect the repository-owned setup:
+3. As `agents`, review mise's plan before applying it:
 
    ```sh
    cd ~/Repos/dotfiles
    mise trust
    mise fmt --check
-   mise tasks validate
    mise bootstrap status
-   mise bootstrap dotfiles status
    mise bootstrap --dry-run
    ```
 
-6. Back up and review conflicting live files before any real dotfile apply.
-   Never add `--force`, `--force-dotfiles`, update, upgrade, or prune flags to
-   the first application.
-7. Install the current stable Codex CLI explicitly after Hermes supplies
-   Node/npm:
+   Back up any conflicting target first. Apply without force flags only after
+   reviewing the dry run:
 
    ```sh
-   npm install --global @openai/codex@latest
-   codex --version
+   mise bootstrap --yes
+   mise bootstrap status
    ```
 
-8. Authenticate GitHub, Hermes, Codex, Discord, and MCP services manually.
+4. Install Hermes Agent and Codex CLI through their official stable routes,
+   then authenticate services manually.
 
-`~/.zprofile` adds `~/.local/share/mise/shims` to login-shell PATH for stable
-tool resolution in non-interactive child processes. `~/.zshrc` separately
-keeps `mise activate zsh` for interactive directory-aware switching. Hermes
-Gateway launchd services snapshot PATH when installed; after the live
-`.zprofile` is applied, regenerate each profile's service from a separate
-login shell so the plist captures the shim directory instead of a
-version-specific mise install path.
+`~/.zprofile` exposes mise shims to login shells and their non-interactive child
+processes. `~/.zshrc` keeps interactive mise activation. A launchd service
+captures `PATH` when installed, so regenerate Hermes Gateway services from a
+login shell after first applying the profile.
 
-## Read-only update checks
+## Weekly snapshot
 
-User-owned tools can be checked through their official managers. Homebrew's
-package catalog can be refreshed without updating Homebrew itself or changing
-installed packages:
+The weekly environment-update cron runs `scripts/publish-dotfiles` before its
+read-only software update check. The helper validates the repository, rejects
+common secret files and private-key material, and pushes a dated commit when
+local dotfiles changed. A failed snapshot is reported without force operations
+or package changes.
 
-```sh
-HOMEBREW_NO_AUTO_UPDATE=1 \
-HOMEBREW_FORCE_API_AUTO_UPDATE=1 \
-brew outdated --json=v2
-```
+## Roll back
 
-Hermes may report Homebrew candidates and exact administrator commands, but it
-does not execute Homebrew mutations.
-
-## Scheduled snapshots
-
-Changes made through the live symlinks modify this checkout directly. Hermes'
-weekly environment-update cron runs `scripts/publish-dotfiles` before checking
-software update candidates. The snapshot helper:
-
-1. refuses common secret filenames and private-key material;
-2. runs mise formatting/config validation and the repository test suite;
-3. checks the Git diff, then displays the staged file list and summary;
-4. commits with the required message and pushes the current branch.
-
-An empty working tree is a successful no-op. A failed validation, commit, or push
-stops the snapshot and is reported by the weekly job. The helper does not pull
-remote changes, update packages, or rewrite Git history.
-
-## Rollback
-
-Before applying on another machine, save any existing `~/.zprofile`, `~/.zshrc`,
-`~/.gitconfig`, and `~/.config/mise/config.toml`. To roll back, remove only a
-repository-owned symlink that still points to this checkout, then restore the
-saved regular file. Homebrew, Codex, Hermes, uv, and authentication state are
-not dotfile rollback targets.
+Remove a symlink only when it still points into this checkout, then restore the
+file backed up during setup. Package, runtime, and authentication state are
+outside dotfile rollback.
 
 ## License
 
