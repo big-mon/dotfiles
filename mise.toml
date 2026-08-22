@@ -6,4 +6,5 @@ pnpm = "11.22.0"
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "dotfiles/mise/config.toml", mode = "symlink" }
 "~/.gitconfig" = { source = "dotfiles/gitconfig", mode = "symlink" }
+"~/.zprofile" = { source = "dotfiles/zprofile", mode = "symlink" }
 "~/.zshrc" = { source = "dotfiles/zshrc", mode = "symlink" }

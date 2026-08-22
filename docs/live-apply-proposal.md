@@ -7,6 +7,7 @@ application state has been changed.
 
 | Live target | Repository source | Mode | Expected effect | Rollback |
 | --- | --- | --- | --- | --- |
+| `~/.zprofile` | `dotfiles/zprofile` | whole-file symlink | Add mise shims to login-shell PATH so non-interactive child processes resolve current mise-managed tools without a version-specific install path. The target is currently absent. | Remove only the repository-owned symlink. |
 | `~/.zshrc` | `dotfiles/zshrc` | whole-file symlink | Preserve the current PATH, file-descriptor limit, mise activation, Homebrew shell helpers, and editor settings. | Remove only the repository-owned symlink and restore the reviewed backup. |
 | `~/.gitconfig` | `dotfiles/gitconfig` | whole-file symlink | Manage the public Git identity, Git LFS filters, and nonsecret `gh` credential-helper routing. | Remove only the repository-owned symlink and restore the reviewed backup. |
 | `~/.config/mise/config.toml` | `dotfiles/mise/config.toml` | whole-file symlink | Preserve the current declared pnpm 11.22.0 tool. | Remove only the repository-owned symlink and restore the reviewed backup before the next mise invocation. |
@@ -27,14 +28,27 @@ continues to read authentication from GitHub CLI's external credential store.
 
 ## Shell activation
 
-`dotfiles/zshrc` intentionally keeps:
+`dotfiles/zprofile` adds the stable shim path:
+
+```zsh
+export PATH="$HOME/.local/share/mise/shims:$PATH"
+```
+
+`dotfiles/zshrc` separately keeps:
 
 ```zsh
 eval "$(mise activate zsh)"
 ```
 
-in `.zshrc`, preserving activation for login and non-login interactive zsh
-sessions. No `.zprofile` target is introduced.
+in `.zshrc`, preserving directory-aware activation for login and non-login
+interactive zsh sessions. The two files have distinct roles: shims for
+non-interactive children, full activation for interactive shells.
+
+Hermes Gateway runs under launchd and does not source either file itself. Its
+plist captures the invoking shell's PATH at service installation time. After
+live application, regenerate the default and Coder Gateway services from a
+separate login shell so their plists capture the shim directory. This service
+operation is not authorized or executed by the repository-only change.
 
 ## Package boundaries
 
@@ -54,7 +68,7 @@ sessions. No `.zprofile` target is introduced.
 
 ## Proposed first application
 
-Only after reviewing backups and approving the three target replacements:
+Only after reviewing backups and approving the four target changes:
 
 ```sh
 cd ~/Repos/dotfiles

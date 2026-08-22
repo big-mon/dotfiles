@@ -25,7 +25,7 @@ existing file.
 ## Declared state
 
 - mise tool: `pnpm = "11.22.0"`, resolved in `mise.lock`
-- dotfiles: `~/.zshrc`, `~/.gitconfig`, and
+- dotfiles: `~/.zprofile`, `~/.zshrc`, `~/.gitconfig`, and
   `~/.config/mise/config.toml`
 - Homebrew: 11 direct formulae and 3 casks in `Brewfile`
 
@@ -76,6 +76,14 @@ Observed but intentionally undeclared inventory is never deleted or pruned:
 
 8. Authenticate GitHub, Hermes, Codex, Discord, and MCP services manually.
 
+`~/.zprofile` adds `~/.local/share/mise/shims` to login-shell PATH for stable
+tool resolution in non-interactive child processes. `~/.zshrc` separately
+keeps `mise activate zsh` for interactive directory-aware switching. Hermes
+Gateway launchd services snapshot PATH when installed; after the live
+`.zprofile` is applied, regenerate each profile's service from a separate
+login shell so the plist captures the shim directory instead of a
+version-specific mise install path.
+
 ## Read-only update checks
 
 User-owned tools can be checked through their official managers. Homebrew's
@@ -94,10 +102,10 @@ does not execute Homebrew mutations.
 ## Rollback
 
 Before an approved apply, save the current `~/.zshrc`, `~/.gitconfig`, and
-`~/.config/mise/config.toml`. To roll back, remove only a repository-owned
-symlink that still points to this checkout, then restore the saved regular
-file. Homebrew, Codex, Hermes, uv, and authentication state are not dotfile
-rollback targets.
+`~/.config/mise/config.toml`; `~/.zprofile` is currently absent. To roll back,
+remove only a repository-owned symlink that still points to this checkout,
+then restore the saved regular file. Homebrew, Codex, Hermes, uv, and
+authentication state are not dotfile rollback targets.
 
 ## License
 
