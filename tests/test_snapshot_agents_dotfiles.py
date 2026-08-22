@@ -6,10 +6,10 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = REPO_ROOT / "scripts" / "publish-dotfiles"
+SCRIPT = REPO_ROOT / "scripts" / "snapshot-agents-dotfiles"
 
 
-class PublishDotfilesTest(unittest.TestCase):
+class SnapshotAgentsDotfilesTest(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
         self.root = Path(self.tempdir.name)
@@ -28,6 +28,7 @@ class PublishDotfilesTest(unittest.TestCase):
         (self.agents / "dotfiles").mkdir(parents=True)
         (self.agents / "dotfiles" / "zshrc").write_text("# initial\n")
         (self.agents / "mise.toml").write_text("[tools]\n")
+        (self.repo / "README.md").write_text("# Initial documentation\n")
         subprocess.run(["git", "-C", str(self.repo), "add", "."], check=True)
         subprocess.run(["git", "-C", str(self.repo), "commit", "-m", "initial"], check=True, capture_output=True)
         subprocess.run(["git", "-C", str(self.repo), "push", "-u", "origin", "main"], check=True, capture_output=True)
@@ -40,7 +41,7 @@ class PublishDotfilesTest(unittest.TestCase):
     def tearDown(self):
         self.tempdir.cleanup()
 
-    def run_publish(self, *args):
+    def run_snapshot(self, *args):
         env = os.environ.copy()
         env["PATH"] = f"{self.bin}:{env['PATH']}"
         env["MISE_LOG"] = str(self.mise_log)
@@ -55,7 +56,7 @@ class PublishDotfilesTest(unittest.TestCase):
     def test_commits_and_pushes_reviewed_change(self):
         (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
 
-        result = self.run_publish("Update shell settings")
+        result = self.run_snapshot("Update shell settings")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         local = subprocess.check_output(
@@ -68,9 +69,9 @@ class PublishDotfilesTest(unittest.TestCase):
         self.assertEqual(remote, "Update shell settings")
 
     def test_refuses_suspicious_untracked_file(self):
-        (self.repo / ".env").write_text("TOKEN=secret\n")
+        (self.agents / "dotfiles" / ".env").write_text("TOKEN=secret\n")
 
-        result = self.run_publish("Accidental secret")
+        result = self.run_snapshot("Accidental secret")
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("suspicious filename", result.stderr)
@@ -85,19 +86,47 @@ class PublishDotfilesTest(unittest.TestCase):
             f"{private_key_header}\nnot-a-real-key\n"
         )
 
-        result = self.run_publish("Accidental private key")
+        result = self.run_snapshot("Accidental private key")
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("private key material", result.stderr)
 
+    def test_refuses_change_outside_agents_dotfiles(self):
+        (self.repo / "README.md").write_text("unexpected documentation change\n")
+
+        result = self.run_snapshot("Do not publish repository metadata")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("outside users/agents/dotfiles", result.stderr)
+        count = subprocess.check_output(
+            ["git", "-C", str(self.repo), "rev-list", "--count", "HEAD"], text=True
+        ).strip()
+        self.assertEqual(count, "1")
+
+    def test_refuses_rename_from_outside_into_agents_dotfiles(self):
+        destination = self.agents / "dotfiles" / "README.md"
+        subprocess.run(
+            ["git", "-C", str(self.repo), "mv", "README.md", str(destination)],
+            check=True,
+        )
+
+        result = self.run_snapshot("Do not hide metadata in a rename")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("outside users/agents/dotfiles: README.md", result.stderr)
+        count = subprocess.check_output(
+            ["git", "-C", str(self.repo), "rev-list", "--count", "HEAD"], text=True
+        ).strip()
+        self.assertEqual(count, "1")
+
     def test_no_changes_is_a_successful_noop(self):
-        result = self.run_publish("Nothing to publish")
+        result = self.run_snapshot("Nothing to snapshot")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("No dotfiles changes to publish", result.stdout)
+        self.assertIn("No agents dotfiles changes to snapshot", result.stdout)
 
     def test_requires_commit_message(self):
-        result = self.run_publish()
+        result = self.run_snapshot()
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("commit message", result.stderr)
@@ -105,7 +134,7 @@ class PublishDotfilesTest(unittest.TestCase):
     def test_validates_the_agents_mise_config(self):
         (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
 
-        result = self.run_publish("Validate account config")
+        result = self.run_snapshot("Validate account config")
 
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = self.mise_log.read_text()

@@ -26,13 +26,13 @@ Verify these assumptions before relying on them. If a prerequisite is missing, e
 - `hosts/hermes-macos/Brewfile`: direct shared Homebrew formulae and casks.
 - `users/agents/mise.toml` and `mise.lock`: user-owned tools and managed dotfiles.
 - `users/agents/dotfiles/`: public files symlinked into the `agents` home directory.
-- `scripts/publish-dotfiles`: validated weekly snapshot helper.
+- `scripts/snapshot-agents-dotfiles`: restricted weekly snapshot helper.
 - `tests/`: behavior checks for the snapshot helper.
 - `README.md`: human account and software bootstrap.
 
 Read these sources instead of copying current versions, package counts, or target lists into another document.
 
-The two clones have different trust roles. The `agents` clone is the editable source used by Hermes and the weekly snapshot. The administrator clone is the only authorized input for Homebrew mutations and is updated from the reviewed GitHub history with `git pull --ff-only`.
+The two clones have different trust roles. The `agents` clone is writable by Hermes, but its weekly automation may publish only `users/agents/dotfiles/`. The administrator clone is the only authorized input for Homebrew mutations and is updated from the reviewed GitHub history with `git pull --ff-only`.
 
 ## Ownership boundaries
 
@@ -97,9 +97,11 @@ Configure provider credentials and messaging interactively, outside Git. A Gatew
 
 ### 4. Preserve maintenance behavior
 
-Live dotfiles are symlinks into this checkout. The `default` profile's weekly environment-update cron runs `scripts/publish-dotfiles` before its read-only update check.
+Live dotfiles are symlinks into this checkout. The `default` profile's weekly environment-update cron runs `scripts/snapshot-agents-dotfiles` before its read-only update check.
 
-The snapshot helper must remain fail-closed: validate the `agents` mise configuration, run tests, reject likely secret material, show the staged changes, then commit and push. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
+The snapshot helper may stage and commit only `users/agents/dotfiles/`. Any changed or staged path outside that directory must stop the snapshot with an error. In particular, automation must never publish changes to `AGENTS.md`, `README.md`, `hosts/`, `users/agents/mise.toml`, `users/agents/mise.lock`, `scripts/`, or `tests/`.
+
+Changes outside the allowed directory require explicit human review or a reviewed pull request. The snapshot helper also validates the `agents` mise configuration, runs tests, rejects likely secret material, and shows the staged changes. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
 
 The external monitor at `~/.hermes/scripts/environment_update_snapshot.py` must continue to reference:
 
@@ -117,8 +119,8 @@ After repository changes, run:
 ```sh
 cd /Users/agents/Repos/dotfiles
 python3 -m unittest discover -s tests -v
-shellcheck scripts/publish-dotfiles
-shfmt -d scripts/publish-dotfiles
+shellcheck scripts/snapshot-agents-dotfiles
+shfmt -d scripts/snapshot-agents-dotfiles
 git diff --check
 
 MISE_TRUSTED_CONFIG_PATHS=/Users/agents/Repos/dotfiles/users/agents \

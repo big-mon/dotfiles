@@ -4,7 +4,7 @@ set -euo pipefail
 commit_message="${1:-}"
 if [[ -z "$commit_message" ]]; then
 	printf 'error: a commit message is required\n' >&2
-	printf 'usage: scripts/publish-dotfiles "Commit message"\n' >&2
+	printf 'usage: scripts/snapshot-agents-dotfiles "Commit message"\n' >&2
 	exit 64
 fi
 
@@ -15,7 +15,7 @@ repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
 cd "$repo_root"
 
 if [[ -z "$(git status --porcelain)" ]]; then
-	printf 'No dotfiles changes to publish.\n'
+	printf 'No agents dotfiles changes to snapshot.\n'
 	exit 0
 fi
 
@@ -38,11 +38,18 @@ check_path() {
 }
 
 while IFS= read -r -d '' path; do
+	case "$path" in
+	users/agents/dotfiles | users/agents/dotfiles/*) ;;
+	*)
+		printf 'error: refusing automatic snapshot because a change exists outside users/agents/dotfiles: %s\n' "$path" >&2
+		exit 1
+		;;
+	esac
 	check_path "$path"
 done < <(
 	{
-		git diff --name-only -z
-		git diff --cached --name-only -z
+		git diff --no-renames --name-only -z
+		git diff --cached --no-renames --name-only -z
 		git ls-files --others --exclude-standard -z
 	} | sort -zu
 )
@@ -56,14 +63,14 @@ if [[ -d tests ]]; then
 fi
 
 git diff --check
-git add -A
+git add -A -- users/agents/dotfiles
 git diff --cached --check
 
-printf '\nChanges to publish:\n'
+printf '\nAgents dotfiles to snapshot:\n'
 git diff --cached --stat
 git diff --cached --name-status
 
-git commit -m "$commit_message"
-git push
+git -c core.hooksPath=/dev/null commit -m "$commit_message" -- users/agents/dotfiles
+git -c core.hooksPath=/dev/null push
 
-printf '\nPublished dotfiles successfully.\n'
+printf '\nSnapshotted agents dotfiles successfully.\n'
