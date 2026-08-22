@@ -12,6 +12,7 @@
 - `agents` という標準アカウントがある
 - 管理者がHomebrewと共有アプリをインストールしている
 - `agents` がmise、Hermes Agent、Codex CLIをインストールしている
+- 管理者用cloneが `/Users/estrilda/Repos/dotfiles` にある
 - このリポジトリが `/Users/agents/Repos/dotfiles` にある
 - `users/agents` のmise設定とdotfilesが適用されている
 
@@ -37,6 +38,16 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 
 Homebrewは `/opt/homebrew` に置き、管理者アカウントが所有します。
 
+管理者専用のcloneも作ります。このcloneはHomebrew変更前のレビューにだけ使い、Hermesから操作しません。
+
+```sh
+mkdir -p /Users/estrilda/Repos
+git clone https://github.com/big-mon/dotfiles.git /Users/estrilda/Repos/dotfiles
+cd /Users/estrilda/Repos/dotfiles
+git status --short --branch
+git show HEAD:hosts/hermes-macos/Brewfile
+```
+
 ## 3. `agents` がmiseを入れてリポジトリを取得する
 
 `agents` へサインインし、miseをユーザー領域へインストールします。
@@ -55,12 +66,21 @@ git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
 
 ## 4. 管理者が共有アプリをインストールする
 
-管理者アカウントへ戻り、`hosts/hermes-macos/Brewfile` を適用します。
+管理者アカウントへ戻り、管理者専用cloneを更新します。pull前のcommitを保存し、取得した全commitに含まれるBrewfile差分と現在のBrewfile全体を確認してから適用します。
 
 ```sh
-/opt/homebrew/bin/brew bundle check --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
-/opt/homebrew/bin/brew bundle --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
+cd /Users/estrilda/Repos/dotfiles
+git status --short --branch
+previous=$(git rev-parse HEAD)
+git pull --ff-only
+git diff "$previous"..HEAD -- hosts/hermes-macos/Brewfile
+git show HEAD:hosts/hermes-macos/Brewfile
+
+/opt/homebrew/bin/brew bundle check --file hosts/hermes-macos/Brewfile
+/opt/homebrew/bin/brew bundle --file hosts/hermes-macos/Brewfile
 ```
+
+`git status` がcleanでない場合や、Brewfileの変更意図を説明できない場合は適用しません。管理者用コマンドから `/Users/agents/Repos/dotfiles` を参照しないでください。
 
 主に次のアプリとCLIが入ります。
 

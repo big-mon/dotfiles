@@ -12,7 +12,8 @@ Assume the human has completed the minimum steps in `README.md`:
 
 - macOS has an administrator account and a non-administrator account named `agents`.
 - The administrator owns Homebrew at `/opt/homebrew`.
-- This repository exists at `/Users/agents/Repos/dotfiles`.
+- The administrator has an isolated review clone at `/Users/estrilda/Repos/dotfiles`.
+- Hermes uses a separate writable clone at `/Users/agents/Repos/dotfiles`.
 - Shared applications come from `hosts/hermes-macos/Brewfile`.
 - `agents` has mise, Hermes Agent, and Codex CLI installed.
 - mise has applied the configuration under `users/agents`.
@@ -31,11 +32,15 @@ Verify these assumptions before relying on them. If a prerequisite is missing, e
 
 Read these sources instead of copying current versions, package counts, or target lists into another document.
 
+The two clones have different trust roles. The `agents` clone is the editable source used by Hermes and the weekly snapshot. The administrator clone is the only authorized input for Homebrew mutations and is updated from the reviewed GitHub history with `git pull --ff-only`.
+
 ## Ownership boundaries
 
 ### Administrator
 
 The administrator owns all Homebrew mutations under `/opt/homebrew`. From the `agents` account, inspect Homebrew and provide exact administrator commands, but do not install, upgrade, remove, prune, or repair Homebrew packages.
+
+Never direct an administrator command to a file under `/Users/agents`. The administrator must use `/Users/estrilda/Repos/dotfiles`, confirm that checkout is clean, review every fetched Brewfile change, and inspect the current Brewfile before applying it.
 
 ### `agents`
 
@@ -54,11 +59,21 @@ Inspect the platform, current account, `/opt/homebrew` ownership, required comma
 
 ### 2. Reconcile repository-managed state
 
-Check the administrator bundle without upgrading it:
+Homebrew mutation is a human-run administrator workflow. Present these commands; do not execute them from `agents`:
 
 ```sh
-HOMEBREW_NO_AUTO_UPDATE=1 /opt/homebrew/bin/brew bundle check --no-upgrade --file /Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile
+cd /Users/estrilda/Repos/dotfiles
+git status --short --branch
+previous=$(git rev-parse HEAD)
+git pull --ff-only
+git diff "$previous"..HEAD -- hosts/hermes-macos/Brewfile
+git show HEAD:hosts/hermes-macos/Brewfile
+
+/opt/homebrew/bin/brew bundle check --file hosts/hermes-macos/Brewfile
+/opt/homebrew/bin/brew bundle --file hosts/hermes-macos/Brewfile
 ```
+
+Stop before `brew bundle` if the checkout is dirty or the Brewfile change cannot be explained. A diff limited to `HEAD^` is insufficient because one pull can contain multiple commits.
 
 Check the standard-account configuration from its own directory:
 
@@ -92,6 +107,8 @@ The external monitor at `~/.hermes/scripts/environment_update_snapshot.py` must 
 - `/Users/agents/Repos/dotfiles/users/agents`
 
 A layout change is incomplete until the monitor runs successfully against the new paths.
+
+The monitor's Brewfile check against the `agents` clone is advisory and read-only. It never authorizes a Homebrew mutation; only the reviewed administrator clone does.
 
 ## Verification
 
