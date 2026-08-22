@@ -1,0 +1,17 @@
+# Hermes Agent — ensure ~/.local/bin is on PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# Raise the per-process file descriptor soft limit for Ghostty shells and
+# processes launched from them, including `hermes --profile coder`.
+ulimit -n 4096
+
+# mise — user-scoped development tool and runtime manager
+# https://mise.jdx.dev/
+eval "$(mise activate zsh)"
+
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Use Zed as the default editor.
+export EDITOR="zed --wait"
+export VISUAL="zed --wait"
