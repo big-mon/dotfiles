@@ -48,25 +48,9 @@ git status --short --branch
 git show HEAD:hosts/hermes-macos/Brewfile
 ```
 
-## 3. `agents` がmiseを入れてリポジトリを取得する
+## 3. 管理者が共有アプリをインストールする
 
-`agents` へサインインし、miseをユーザー領域へインストールします。
-
-```sh
-curl https://mise.run | sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-続いて公開リポジトリを取得します。
-
-```sh
-mkdir -p ~/Repos
-git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
-```
-
-## 4. 管理者が共有アプリをインストールする
-
-管理者アカウントへ戻り、管理者専用cloneを更新します。pull前のcommitを保存し、取得した全commitに含まれるBrewfile差分と現在のBrewfile全体を確認してから適用します。
+そのまま管理者アカウントで、管理者専用cloneを更新します。pull前のcommitを保存し、取得した全commitに含まれるBrewfile差分と現在のBrewfile全体を確認してから適用します。
 
 ```sh
 cd /Users/estrilda/Repos/dotfiles
@@ -92,9 +76,25 @@ git show HEAD:hosts/hermes-macos/Brewfile
 
 正確な直接依存は `hosts/hermes-macos/Brewfile` を基準にします。
 
+## 4. `agents` がmiseを入れてリポジトリを取得する
+
+ここで初めて `agents` へサインインし、miseをユーザー領域へインストールします。
+
+```sh
+curl https://mise.run | sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+続いて公開リポジトリを取得します。
+
+```sh
+mkdir -p ~/Repos
+git clone https://github.com/big-mon/dotfiles.git ~/Repos/dotfiles
+```
+
 ## 5. `agents` がユーザー設定を適用する
 
-`agents` へ戻り、適用内容を先に確認します。
+続けて `agents` で適用内容を確認します。
 
 ```sh
 cd ~/Repos/dotfiles/users/agents

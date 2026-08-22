@@ -17,6 +17,13 @@ class DocumentationBoundaryTest(unittest.TestCase):
         self.assertNotIn(unsafe_brewfile, README)
         self.assertIn("/Users/estrilda/Repos/dotfiles", README)
 
+    def test_human_setup_finishes_admin_work_before_switching_to_agents(self):
+        admin_apps = README.index("## 3. 管理者が共有アプリをインストールする")
+        agents_setup = README.index("## 4. `agents` がmiseを入れてリポジトリを取得する")
+
+        self.assertLess(admin_apps, agents_setup)
+        self.assertIn("ここで初めて `agents` へサインイン", README)
+
     def test_agent_instructions_forbid_agents_checkout_as_admin_input(self):
         self.assertIn("Never direct an administrator command to a file under `/Users/agents`", AGENTS)
         self.assertIn("/Users/estrilda/Repos/dotfiles", AGENTS)
