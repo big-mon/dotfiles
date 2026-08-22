@@ -8,7 +8,3 @@ pnpm = "11.22.0"
 "~/.gitconfig" = { source = "dotfiles/gitconfig", mode = "symlink" }
 "~/.zprofile" = { source = "dotfiles/zprofile", mode = "symlink" }
 "~/.zshrc" = { source = "dotfiles/zshrc", mode = "symlink" }
-
-[tasks.publish]
-description = "Validate, commit, and push local dotfiles changes"
-run = "./scripts/publish-dotfiles"

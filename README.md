@@ -99,17 +99,11 @@ brew outdated --json=v2
 Hermes may report Homebrew candidates and exact administrator commands, but it
 does not execute Homebrew mutations.
 
-## Publish local changes
+## Scheduled snapshots
 
-Changes made through the live symlinks modify this checkout directly. To inspect,
-validate, commit, and push those local changes:
-
-```sh
-cd ~/Repos/dotfiles
-mise run publish -- "Update shell settings"
-```
-
-The publish task:
+Changes made through the live symlinks modify this checkout directly. Hermes'
+weekly environment-update cron runs `scripts/publish-dotfiles` before checking
+software update candidates. The snapshot helper:
 
 1. refuses common secret filenames and private-key material;
 2. runs mise formatting/config validation and the repository test suite;
@@ -117,8 +111,8 @@ The publish task:
 4. commits with the required message and pushes the current branch.
 
 An empty working tree is a successful no-op. A failed validation, commit, or push
-stops the task and reports the underlying error. It does not pull remote changes,
-update packages, or rewrite Git history.
+stops the snapshot and is reported by the weekly job. The helper does not pull
+remote changes, update packages, or rewrite Git history.
 
 ## Rollback
 

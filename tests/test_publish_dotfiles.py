@@ -100,20 +100,5 @@ class PublishDotfilesTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("commit message", result.stderr)
 
-    def test_mise_exposes_publish_task(self):
-        env = os.environ.copy()
-        env["MISE_TRUSTED_CONFIG_PATHS"] = str(REPO_ROOT)
-        result = subprocess.run(
-            ["mise", "tasks"],
-            cwd=REPO_ROOT,
-            env=env,
-            text=True,
-            capture_output=True,
-        )
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("publish", result.stdout)
-
-
 if __name__ == "__main__":
     unittest.main()
