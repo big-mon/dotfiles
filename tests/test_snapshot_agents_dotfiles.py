@@ -29,6 +29,13 @@ class SnapshotAgentsDotfilesTest(unittest.TestCase):
         (self.agents / "dotfiles" / "zshrc").write_text("# initial\n")
         (self.agents / "mise.toml").write_text("[tools]\n")
         (self.repo / "README.md").write_text("# Initial documentation\n")
+        (self.repo / "tests").mkdir()
+        (self.repo / "tests" / "test_smoke.py").write_text(
+            "import unittest\n\n"
+            "class SmokeTest(unittest.TestCase):\n"
+            "    def test_smoke(self):\n"
+            "        self.assertTrue(True)\n"
+        )
         subprocess.run(["git", "-C", str(self.repo), "add", "."], check=True)
         subprocess.run(["git", "-C", str(self.repo), "commit", "-m", "initial"], check=True, capture_output=True)
         subprocess.run(["git", "-C", str(self.repo), "push", "-u", "origin", "main"], check=True, capture_output=True)
@@ -124,6 +131,19 @@ class SnapshotAgentsDotfilesTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("No agents dotfiles changes to snapshot", result.stdout)
+
+    def test_does_not_write_python_bytecode(self):
+        (self.agents / "dotfiles" / "zshrc").write_text("# updated\n")
+
+        result = self.run_snapshot("Avoid Python bytecode")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.repo / "tests" / "__pycache__").exists())
+
+    def test_uses_isolated_python_without_bytecode(self):
+        script = SCRIPT.read_text()
+
+        self.assertIn("/usr/bin/python3 -B -m unittest discover -s tests -v", script)
 
     def test_requires_commit_message(self):
         result = self.run_snapshot()

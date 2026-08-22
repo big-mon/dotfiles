@@ -59,7 +59,7 @@ agents_config="$repo_root/users/agents"
 mise -C "$agents_config" fmt --check
 mise -C "$agents_config" tasks validate
 if [[ -d tests ]]; then
-	python3 -m unittest discover -s tests -v
+	/usr/bin/python3 -B -m unittest discover -s tests -v
 fi
 
 git diff --check

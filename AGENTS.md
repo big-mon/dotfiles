@@ -24,7 +24,7 @@ Verify these assumptions before relying on them. If a prerequisite is missing, e
 ## Sources of truth
 
 - `hosts/hermes-macos/Brewfile`: direct shared Homebrew formulae and casks.
-- `users/agents/mise.toml` and `mise.lock`: user-owned tools and managed dotfiles.
+- `users/agents/mise.toml` and `mise.lock`: the single global mise config, user-owned tools, managed dotfiles, and resolved lock data.
 - `users/agents/dotfiles/`: public files symlinked into the `agents` home directory.
 - `scripts/snapshot-agents-dotfiles`: restricted weekly snapshot helper.
 - `tests/`: behavior checks for the snapshot helper.
@@ -84,7 +84,7 @@ mise bootstrap dotfiles status
 mise bootstrap --dry-run
 ```
 
-For each existing-file conflict, show the exact target and proposed backup destination before moving anything. Wait for human approval of filesystem moves. Apply without force flags. Completion requires every declared dotfile to be `applied`, every declared tool to be `installed`, and every live symlink to resolve into `users/agents/dotfiles`.
+For each existing-file conflict, show the exact target and proposed backup destination before moving anything. Wait for human approval of filesystem moves. Apply without force flags. Completion requires every declared dotfile to be `applied`, every declared tool to be `installed`, and every live symlink to resolve into `users/agents`.
 
 ### 3. Reconcile non-secret Hermes structure
 
@@ -103,6 +103,8 @@ The snapshot helper may stage and commit only `users/agents/dotfiles/`. Any chan
 
 Changes outside the allowed directory require explicit human review or a reviewed pull request. The snapshot helper also validates the `agents` mise configuration, runs tests, rejects likely secret material, and shows the staged changes. It does not pull, rebase, reset, force-push, rewrite history, or update packages.
 
+The root `.gitignore` excludes `.DS_Store`, Python `__pycache__` directories, and bytecode. It intentionally does not ignore `.env`; an `.env` under the allowed snapshot path must remain visible and stop the snapshot.
+
 The external monitor at `~/.hermes/scripts/environment_update_snapshot.py` must continue to reference:
 
 - `/Users/agents/Repos/dotfiles/hosts/hermes-macos/Brewfile`
@@ -118,7 +120,7 @@ After repository changes, run:
 
 ```sh
 cd /Users/agents/Repos/dotfiles
-python3 -m unittest discover -s tests -v
+/usr/bin/python3 -B -m unittest discover -s tests -v
 shellcheck scripts/snapshot-agents-dotfiles
 shfmt -d scripts/snapshot-agents-dotfiles
 git diff --check
