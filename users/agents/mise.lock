@@ -34,7 +34,7 @@ version = "3.14.7"
 backend = "core:python"
 
 [tools.python."platforms.macos-arm64"]
-checksum = "blake3:2658330816d6c6b6f99a4b92c24c14a1fef09caa072952e799815d01e60e2911"
+checksum = "sha256:423717c485b9ee7822590b9d973c1b5fb2cda0fe43448ab82a3d44f823bd329c"
 url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260814/cpython-3.14.7+20260814-aarch64-apple-darwin-install_only_stripped.tar.gz"
 provenance = "github-attestations"
 
@@ -80,7 +80,7 @@ version = "4.53.6"
 backend = "aqua:mikefarah/yq"
 
 [tools.yq."platforms.macos-arm64"]
-checksum = "sha512:a1e235ea619810e2f741f970c26a5139452d509af0a61b3fafcfe2ace5a89304b6ee17cdb3ce3ced7e43b6a744d080e3cb0b83f8022dbb81f590bc6968a8fd9e"
+checksum = "sha256:cceb0b8d71ea5294334121f8429f33f92b920e7217d904a2f9f35443968ac424"
 url = "https://github.com/mikefarah/yq/releases/download/v4.53.6/yq_darwin_arm64"
 url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/522028033"
 provenance = "cosign"
