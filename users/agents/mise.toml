@@ -2,6 +2,7 @@
 
 [tools]
 pnpm = "11.22.0"
+uv = "0.12.5"
 
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise.toml", mode = "symlink" }
