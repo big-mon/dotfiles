@@ -43,8 +43,8 @@ Never direct an administrator command to a file under `/Users/agents`. The admin
 
 ### `agents`
 
-- mise owns pnpm and the symlinks declared in `users/agents/mise.toml`.
-- Hermes owns its uv, Python, Node.js, virtual environment, and migrations under `~/.hermes`.
+- mise owns every user tool and symlink declared in `users/agents/mise.toml`.
+- Hermes owns its private uv, Python, Node.js, virtual environment, and migrations under `~/.hermes`.
 - Codex CLI follows the official npm-global stable route using Hermes-supplied npm.
 - GitHub CLI is shared through Homebrew; its authentication belongs to `agents`.
 

@@ -68,8 +68,6 @@ git show HEAD:hosts/hermes-macos/Brewfile
 
 - GUI：Ghostty、Obsidian、Zed
 - Git/GitHub：GitHub CLI、Git LFS
-- 検索・データ処理：fd、ripgrep、jq、yq、tree
-- シェル検証：ShellCheck、shfmt
 - zsh補助：zsh-autosuggestions、zsh-syntax-highlighting
 
 正確な直接依存は `hosts/hermes-macos/Brewfile` を基準にします。
@@ -110,7 +108,7 @@ mise trust ~/.config/mise/config.toml
 mise bootstrap status --missing
 ```
 
-最後のコマンドが成功し、dotfileが `applied`、ツールが `installed` なら完了です。新しいシェル設定を読むため、ログインシェルを開き直します。
+最後のコマンドが成功し、dotfileが `applied`、ツールが `installed` なら完了です。miseはユーザー用Python・uv・pnpmに加え、検索・データ処理・シェル検証用CLIを管理します。新しいシェル設定を読むため、ログインシェルを開き直します。
 
 ```sh
 exec zsh -l
@@ -125,7 +123,7 @@ curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
 hermes --version
 ```
 
-Hermes installerがユーザー領域のuv、Python、Node.jsなどを管理するため、これらを別経路で追加する必要はありません。Hermes付属のnpmからCodex CLIを入れます。
+Hermes installerは`~/.hermes`内の専用uv、Python、Node.jsを管理します。miseが管理するユーザー用ツールとは分離したままにします。Hermes付属のnpmからCodex CLIを入れます。
 
 ```sh
 npm install --global @openai/codex@latest
