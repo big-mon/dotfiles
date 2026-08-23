@@ -10,6 +10,15 @@ url = "https://github.com/pnpm/pnpm/releases/download/v11.22.0/pnpm-darwin-arm64
 url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/515895947"
 provenance = "github-attestations"
 
+[[tools.python]]
+version = "3.14.7"
+backend = "core:python"
+
+[tools.python."platforms.macos-arm64"]
+checksum = "blake3:2658330816d6c6b6f99a4b92c24c14a1fef09caa072952e799815d01e60e2911"
+url = "https://github.com/astral-sh/python-build-standalone/releases/download/20260814/cpython-3.14.7+20260814-aarch64-apple-darwin-install_only_stripped.tar.gz"
+provenance = "github-attestations"
+
 [[tools.uv]]
 version = "0.12.5"
 backend = "aqua:astral-sh/uv"
