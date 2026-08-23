@@ -63,6 +63,8 @@ Inspect the platform, current account, `/opt/homebrew` ownership, required comma
 Homebrew mutation is a human-run administrator workflow. Present these commands; do not execute them from `agents`:
 
 ```sh
+(
+set -e
 cd /Users/estrilda/Repos/dotfiles
 git status --short --branch
 previous=$(git rev-parse HEAD)
@@ -72,6 +74,7 @@ git show HEAD:hosts/hermes-macos/Brewfile
 
 /opt/homebrew/bin/brew bundle check --file hosts/hermes-macos/Brewfile
 /opt/homebrew/bin/brew bundle --file hosts/hermes-macos/Brewfile
+)
 ```
 
 Stop before `brew bundle` if the checkout is dirty or the Brewfile change cannot be explained. A diff limited to `HEAD^` is insufficient because one pull can contain multiple commits.

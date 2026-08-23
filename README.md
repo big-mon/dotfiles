@@ -51,6 +51,8 @@ git show HEAD:hosts/hermes-macos/Brewfile
 そのまま管理者アカウントで、管理者専用cloneを更新します。pull前のcommitを保存し、取得した全commitに含まれるBrewfile差分と現在のBrewfile全体を確認してから適用します。
 
 ```sh
+(
+set -e
 cd /Users/estrilda/Repos/dotfiles
 git status --short --branch
 previous=$(git rev-parse HEAD)
@@ -60,6 +62,7 @@ git show HEAD:hosts/hermes-macos/Brewfile
 
 /opt/homebrew/bin/brew bundle check --file hosts/hermes-macos/Brewfile
 /opt/homebrew/bin/brew bundle --file hosts/hermes-macos/Brewfile
+)
 ```
 
 `git status` がcleanでない場合や、Brewfileの変更意図を説明できない場合は適用しません。管理者用コマンドから `/Users/agents/Repos/dotfiles` を参照しないでください。
