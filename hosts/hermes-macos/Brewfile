@@ -2,6 +2,7 @@
 
 brew "gh"
 brew "git-lfs"
+brew "zellij"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 
