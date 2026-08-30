@@ -1,2 +1,5 @@
 # mise shims — stable tool resolution for login and non-interactive children.
 export PATH="$HOME/.local/share/mise/shims:$PATH"
+
+# Hermes Agent — ensure ~/.local/bin is on PATH
+export PATH="$HOME/.local/bin:$PATH"
